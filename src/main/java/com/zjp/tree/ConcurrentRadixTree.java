@@ -3,18 +3,35 @@ package com.zjp.tree;
 import com.zjp.tree.ConcurrentRadixTree.SearchResult.Classification;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
+import java.util.Collections;
 import java.util.Objects;
 
 public class ConcurrentRadixTree<O> {
 
-  private NodeFactory nodeFactory;
+  private final NodeFactory nodeFactory;
 
   protected volatile Node root;
 
-  public O put(CharSequence key, O value) {
+  public ConcurrentRadixTree(NodeFactory nodeFactory) {
+    this.nodeFactory = nodeFactory;
+    this.root = nodeFactory.createNode("", null, Collections.emptyList(), true);
+  }
+
+  public O getValueForExactKey(CharSequence key) {
+    SearchResult searchResult = searchTree(key);
+    if (searchResult.classification.equals(Classification.EXACT_MATCH)) {
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      O value = (O) searchResult.node.getValue();
+      return value;
+    }
     return null;
   }
 
+  public O put(CharSequence key, O value) {
+    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+    O existing = (O) putInternal(key, value, false);
+    return existing;
+  }
 
   Object putInternal(CharSequence key, Object value, boolean overwrite) {
     Objects.requireNonNull(key);
@@ -33,14 +50,15 @@ public class ConcurrentRadixTree<O> {
           return existing;
         }
 
-        Node replacement = nodeFactory
-            .createNode(key, value, searchResult.node.getOutgoingEdges(), false);
+        Node replacement = nodeFactory.createNode(key, value,
+            searchResult.node.getOutgoingEdges(), false);
         searchResult.parent.updateOutgoingEdge(replacement);
         return existing;
       }
       default: {
         throw new IllegalStateException(
-            "Unexpected classification for search result: " + searchResult);
+            "Unexpected classification for search result: "
+                + searchResult);
       }
     }
   }
@@ -64,8 +82,8 @@ public class ConcurrentRadixTree<O> {
       current = nextNode;
       found = 0;
       CharSequence characters = current.getIncomingEdge();
-      for (int i = 0, size = characters.length(); i < size && matched < keyLength;
-          i++) {
+      for (int i = 0, size = characters.length(); i < size
+          && matched < keyLength; i++) {
         if (characters.charAt(i) != key.charAt(matched)) {
           break outer_loop;
         }
@@ -74,7 +92,8 @@ public class ConcurrentRadixTree<O> {
       }
     }
 
-    return new SearchResult(key, current, matched, found, parent, grandParent);
+    return new SearchResult(key, current, matched, found, parent,
+        grandParent);
   }
 
   static class SearchResult {
@@ -88,11 +107,14 @@ public class ConcurrentRadixTree<O> {
     final Classification classification;
 
     enum Classification {
-      EXACT_MATCH,
-      INCOMPLETE_MATCH_TO_END_OF_EDGE,
-      INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE,
-      KEY_ENDS_MID_EDGE,
-      INVALID // INVALID is never used, except in unit testing
+      EXACT_MATCH, INCOMPLETE_MATCH_TO_END_OF_EDGE, INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE, KEY_ENDS_MID_EDGE, INVALID // INVALID
+      // is
+      // never
+      // used,
+      // except
+      // in
+      // unit
+      // testing
     }
 
     SearchResult(CharSequence key, Node node, int matched, int found,
@@ -108,35 +130,35 @@ public class ConcurrentRadixTree<O> {
       this.classification = classify(key, node, matched, found);
     }
 
-    protected Classification classify(CharSequence key, Node nodeFound, int charsMatched,
-        int charsMatchedInNodeFound) {
+    protected Classification classify(CharSequence key, Node nodeFound,
+        int charsMatched, int charsMatchedInNodeFound) {
       if (charsMatched == key.length()) {
-        if (charsMatchedInNodeFound == nodeFound.getIncomingEdge().length()) {
+        if (charsMatchedInNodeFound == nodeFound.getIncomingEdge()
+            .length()) {
           return Classification.EXACT_MATCH;
-        } else if (charsMatchedInNodeFound < nodeFound.getIncomingEdge().length()) {
+        } else if (charsMatchedInNodeFound < nodeFound.getIncomingEdge()
+            .length()) {
           return Classification.KEY_ENDS_MID_EDGE;
         }
       } else if (charsMatched < key.length()) {
-        if (charsMatchedInNodeFound == nodeFound.getIncomingEdge().length()) {
+        if (charsMatchedInNodeFound == nodeFound.getIncomingEdge()
+            .length()) {
           return Classification.INCOMPLETE_MATCH_TO_END_OF_EDGE;
-        } else if (charsMatchedInNodeFound < nodeFound.getIncomingEdge().length()) {
+        } else if (charsMatchedInNodeFound < nodeFound.getIncomingEdge()
+            .length()) {
           return Classification.INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE;
         }
       }
-      throw new IllegalStateException("Unexpected failure to classify SearchResult: " + this);
+      throw new IllegalStateException(
+          "Unexpected failure to classify SearchResult: " + this);
     }
 
     @Override
     public String toString() {
-      return "SearchResult{" +
-          "key=" + key +
-          ", node=" + node +
-          ", matched=" + matched +
-          ", found=" + found +
-          ", parent=" + parent +
-          ", grandParent=" + grandParent +
-          ", classification=" + classification +
-          '}';
+      return "SearchResult{" + "key=" + key + ", node=" + node
+          + ", matched=" + matched + ", found=" + found + ", parent="
+          + parent + ", grandParent=" + grandParent
+          + ", classification=" + classification + '}';
     }
   }
 }

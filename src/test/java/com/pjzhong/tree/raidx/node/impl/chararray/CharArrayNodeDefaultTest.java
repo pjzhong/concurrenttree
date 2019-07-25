@@ -12,5 +12,4 @@ public class CharArrayNodeDefaultTest {
     Node node = new CharArrayNodeDefault("FOO", null, Collections.emptyList());
     node.updateOutgoingEdge(new CharArrayNodeDefault("BAR", null, Collections.emptyList()));
   }
-
 }
