@@ -13,7 +13,8 @@ public class ConcurrentRadixTreeTest {
 
   @Test
   public void testPut_AddToRoot() {
-    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(new DefaultCharArrayNodeFactory());
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(
+        new DefaultCharArrayNodeFactory());
     String expected =
         "○\n" +
             "└── ○ A (1)\n";

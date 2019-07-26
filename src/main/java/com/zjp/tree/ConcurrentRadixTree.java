@@ -1,6 +1,7 @@
 package com.zjp.tree;
 
 import com.zjp.tree.ConcurrentRadixTree.SearchResult.Classification;
+import com.zjp.tree.common.CharSequences;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
 import java.util.Collections;
@@ -55,6 +56,14 @@ public class ConcurrentRadixTree<O> {
         searchResult.parent.updateOutgoingEdge(replacement);
         return existing;
       }
+      case KEY_ENDS_MID_EDGE: {
+        CharSequence keyCharsFromStartOfNodeFound = key
+            .subSequence(searchResult.matched - searchResult.found, key.length());
+        CharSequence commonPrefix = CharSequences
+            .getCommonPrefix(keyCharsFromStartOfNodeFound, searchResult.node.getIncomingEdge());
+
+
+      }
       default: {
         throw new IllegalStateException(
             "Unexpected classification for search result: "
@@ -74,7 +83,7 @@ public class ConcurrentRadixTree<O> {
     while (matched < keyLength) {
       Node nextNode = current.getOutgoingEdge(key.charAt(matched));
       if (nextNode == null) {
-        break outer_loop;
+        break;
       }
 
       grandParent = parent;
@@ -107,14 +116,11 @@ public class ConcurrentRadixTree<O> {
     final Classification classification;
 
     enum Classification {
-      EXACT_MATCH, INCOMPLETE_MATCH_TO_END_OF_EDGE, INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE, KEY_ENDS_MID_EDGE, INVALID // INVALID
-      // is
-      // never
-      // used,
-      // except
-      // in
-      // unit
-      // testing
+      EXACT_MATCH,
+      INCOMPLETE_MATCH_TO_END_OF_EDGE,
+      INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE,
+      KEY_ENDS_MID_EDGE,
+      INVALID // INVALID
     }
 
     SearchResult(CharSequence key, Node node, int matched, int found,

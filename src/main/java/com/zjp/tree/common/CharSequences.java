@@ -21,4 +21,22 @@ public class CharSequences {
     return new StringBuilder(charSequence.length()).append(charSequence).toString();
   }
 
+  public static CharSequence getCommonPrefix(CharSequence a, CharSequence b) {
+    int minLength = Math.min(a.length(), b.length());
+    for (int i = 0; i < minLength; i++) {
+      if (a.charAt(i) != b.charAt(i)) {
+        return a.subSequence(0, i);
+      }
+    }
+    return a.subSequence(0, minLength);
+  }
+
+  public static CharSequence subtractPrefix(CharSequence main, CharSequence prefix) {
+    int startIdx = prefix.length();
+    int mainLength = main.length();
+    if (startIdx > mainLength) {
+      return "";
+    }
+    return main.subSequence(startIdx, mainLength);
+  }
 }
