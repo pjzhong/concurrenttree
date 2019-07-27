@@ -4,7 +4,10 @@ import com.zjp.tree.ConcurrentRadixTree.SearchResult.Classification;
 import com.zjp.tree.common.CharSequences;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class ConcurrentRadixTree<O> {
@@ -12,6 +15,10 @@ public class ConcurrentRadixTree<O> {
   private final NodeFactory nodeFactory;
 
   protected volatile Node root;
+
+  public Node getRoot() {
+    return root;
+  }
 
   public ConcurrentRadixTree(NodeFactory nodeFactory) {
     this.nodeFactory = nodeFactory;
@@ -57,12 +64,74 @@ public class ConcurrentRadixTree<O> {
         return existing;
       }
       case KEY_ENDS_MID_EDGE: {
+        Node node = searchResult.node;
         CharSequence keyCharsFromStartOfNodeFound = key
             .subSequence(searchResult.matched - searchResult.found, key.length());
         CharSequence commonPrefix = CharSequences
-            .getCommonPrefix(keyCharsFromStartOfNodeFound, searchResult.node.getIncomingEdge());
+            .getCommonPrefix(keyCharsFromStartOfNodeFound, node.getIncomingEdge());
+        CharSequence suffixFromExistingEdge = CharSequences
+            .subtractPrefix(node.getIncomingEdge(), commonPrefix);
 
+        Node newChild = nodeFactory
+            .createNode(suffixFromExistingEdge, node.getValue(), node.getOutgoingEdges(), false);
+        Node newParent = nodeFactory
+            .createNode(commonPrefix, value, Collections.singletonList(newChild), false);
 
+        searchResult.parent.updateOutgoingEdge(newParent);
+
+        return null;
+      }
+      case INCOMPLETE_MATCH_TO_END_OF_EDGE: {
+        CharSequence keySuffix = key.subSequence(searchResult.matched, key.length());
+        Node newChild = nodeFactory.createNode(keySuffix, value, Collections.emptyList(), false);
+
+        Node node = searchResult.node;
+
+        // Clone the current node adding the new child
+        List<Node> edges = new ArrayList<>(node.getOutgoingEdges().size() + 1);
+        edges.addAll(node.getOutgoingEdges());
+        edges.add(newChild);
+        Node clonedNode = nodeFactory
+            .createNode(node.getIncomingEdge(), node.getValue(), edges, node == root);
+
+        if (node == root) {
+          this.root = clonedNode;
+        } else {
+          searchResult.parent.updateOutgoingEdge(clonedNode);
+        }
+
+        return null;
+      }
+      case INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE: {
+        //Search found a difference in characters between the kye and the characters in the middle
+        // of the edge in the current node, adn the key still has trailing unmatched characters.
+        // -> Split the node in three:
+        // Let's call node found:NF
+        // 1.Create a new node N1 containing the unmatched characters from the rest of the day,
+        // 2.Create a new node N2 containing the unmatched characters from the rest of the edge in NF,
+        // and copy the original edges and the value from NF unmodified into N2
+        // 3.Create a new node N3, which will be the split node, containing the matched characters from
+        // the key and the edge, and add N1 and N2 as child node of N3
+        // Re-add N3 to the parent node of NF, effectively replacing NF in the tree
+
+        Node node = searchResult.node;
+        CharSequence keyCharsFromStartOfNodeFound = key
+            .subSequence(searchResult.matched - searchResult.found, key.length());
+        CharSequence commonPrefix = CharSequences
+            .getCommonPrefix(keyCharsFromStartOfNodeFound, node.getIncomingEdge());
+        CharSequence suffixFromExistingEdge = CharSequences
+            .subtractPrefix(node.getIncomingEdge(), commonPrefix);
+        CharSequence suffixFromKey = key.subSequence(searchResult.matched, key.length());
+
+        // Create new nodes...
+        Node n1 = nodeFactory.createNode(suffixFromKey, value, Collections.emptyList(), false);
+        Node n2 = nodeFactory
+            .createNode(suffixFromExistingEdge, node.getValue(), node.getOutgoingEdges(), false);
+        Node n3 = nodeFactory.createNode(commonPrefix, null, Arrays.asList(n1, n2), false);
+
+        searchResult.parent.updateOutgoingEdge(n3);
+
+        return null;
       }
       default: {
         throw new IllegalStateException(

@@ -40,7 +40,13 @@ public class CharArrayNodeDefault implements Node {
 
   @Override
   public Node getOutgoingEdge(Character firstCharacter) {
-    return null;
+    int index = NodeUtil.binarySearch(outgoingEdges,
+        firstCharacter);
+    if (index < 0) {
+      return null;
+    }
+
+    return outgoingEdges.get(index);
   }
 
   @Override
@@ -58,7 +64,7 @@ public class CharArrayNodeDefault implements Node {
 
   @Override
   public List<Node> getOutgoingEdges() {
-    return null;
+    return outgoingEdgesList;
   }
 
   @Override
@@ -68,6 +74,6 @@ public class CharArrayNodeDefault implements Node {
 
   @Override
   public Object getValue() {
-    return null;
+    return value;
   }
 }
