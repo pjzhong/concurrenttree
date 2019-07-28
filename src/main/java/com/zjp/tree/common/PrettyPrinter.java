@@ -1,7 +1,7 @@
 package com.zjp.tree.common;
 
-import com.zjp.tree.ConcurrentRadixTree;
 import com.zjp.tree.node.Node;
+import com.zjp.tree.node.util.PrettyPrintable;
 import java.util.List;
 
 public class PrettyPrinter {
@@ -9,9 +9,9 @@ public class PrettyPrinter {
   PrettyPrinter() {
   }
 
-  public static String prettyPrint(ConcurrentRadixTree tree) {
+  public static String prettyPrint(PrettyPrintable tree) {
     StringBuilder sb = new StringBuilder();
-    prettyPrint(tree.getRoot(), sb, "", true, true);
+    prettyPrint(tree.getNode(), sb, "", true, true);
     return sb.toString();
   }
 

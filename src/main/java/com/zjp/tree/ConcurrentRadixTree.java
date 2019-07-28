@@ -2,15 +2,17 @@ package com.zjp.tree;
 
 import com.zjp.tree.ConcurrentRadixTree.SearchResult.Classification;
 import com.zjp.tree.common.CharSequences;
+import com.zjp.tree.common.PrettyPrinter;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
+import com.zjp.tree.node.util.PrettyPrintable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ConcurrentRadixTree<O> {
+public class ConcurrentRadixTree<O> implements PrettyPrintable {
 
   private final NodeFactory nodeFactory;
 
@@ -172,6 +174,11 @@ public class ConcurrentRadixTree<O> {
 
     return new SearchResult(key, current, matched, found, parent,
         grandParent);
+  }
+
+  @Override
+  public Node getNode() {
+    return root;
   }
 
   static class SearchResult {
