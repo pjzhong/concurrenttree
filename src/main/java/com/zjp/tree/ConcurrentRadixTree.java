@@ -8,14 +8,20 @@ import com.zjp.tree.node.util.PrettyPrintable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ConcurrentRadixTree<O> implements PrettyPrintable {
 
   private final NodeFactory nodeFactory;
 
   protected volatile Node root;
+
+  private final Lock writeLock = new ReentrantLock();
 
   public Node getRoot() {
     return root;
@@ -24,6 +30,14 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
   public ConcurrentRadixTree(NodeFactory nodeFactory) {
     this.nodeFactory = nodeFactory;
     this.root = nodeFactory.createNode("", null, Collections.emptyList(), true);
+  }
+
+  protected void acquireWriteLock() {
+    writeLock.lock();
+  }
+
+  protected void releaseWriteLock() {
+    writeLock.unlock();
   }
 
   public O getValueForExactKey(CharSequence key) {
@@ -48,103 +62,120 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
     return existing;
   }
 
+  public int size() {
+    Deque<Node> stack = new LinkedList<>();
+    stack.push(this.root);
+    int count = 0;
+    while (!stack.isEmpty()) {// code optimize from origin
+      Node current = stack.pop();
+      stack.addAll(current.getOutgoingEdges());
+      if (current.getValue() != null) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   Object putInternal(CharSequence key, Object value, boolean overwrite) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(value);
     if (key.length() == 0) {
-      throw new NullPointerException("key value is Empty");
+      throw new IllegalArgumentException("key value is Empty");
     }
 
     SearchResult searchResult = searchTree(key);
     Classification classification = searchResult.classification;
 
-    switch (classification) {
-      case EXACT_MATCH: {
-        Object existing = searchResult.node.getValue();
-        if (!overwrite && existing != null) {
+    acquireWriteLock();
+    try {
+      switch (classification) {
+        case EXACT_MATCH: {
+          Object existing = searchResult.node.getValue();
+          if (overwrite || existing == null) {
+            Node node = searchResult.node;
+            Node replacement = nodeFactory.createNode(key, value, node.getOutgoingEdges(), false);
+            searchResult.parent.updateOutgoingEdge(replacement);
+          }
           return existing;
         }
+        case KEY_ENDS_MID_EDGE: {
+          Node node = searchResult.node;
+          CharSequence keyCharsFromStartOfNodeFound = key
+              .subSequence(searchResult.matched - searchResult.found, key.length());
+          CharSequence commonPrefix = CharSequences
+              .getCommonPrefix(keyCharsFromStartOfNodeFound, node.getIncomingEdge());
+          CharSequence suffixFromExistingEdge = CharSequences
+              .subtractPrefix(node.getIncomingEdge(), commonPrefix);
 
-        Node replacement = nodeFactory.createNode(key, value,
-            searchResult.node.getOutgoingEdges(), false);
-        searchResult.parent.updateOutgoingEdge(replacement);
-        return existing;
-      }
-      case KEY_ENDS_MID_EDGE: {
-        Node node = searchResult.node;
-        CharSequence keyCharsFromStartOfNodeFound = key
-            .subSequence(searchResult.matched - searchResult.found, key.length());
-        CharSequence commonPrefix = CharSequences
-            .getCommonPrefix(keyCharsFromStartOfNodeFound, node.getIncomingEdge());
-        CharSequence suffixFromExistingEdge = CharSequences
-            .subtractPrefix(node.getIncomingEdge(), commonPrefix);
+          Node newChild = nodeFactory
+              .createNode(suffixFromExistingEdge, node.getValue(), node.getOutgoingEdges(), false);
+          Node newParent = nodeFactory
+              .createNode(commonPrefix, value, Collections.singletonList(newChild), false);
 
-        Node newChild = nodeFactory
-            .createNode(suffixFromExistingEdge, node.getValue(), node.getOutgoingEdges(), false);
-        Node newParent = nodeFactory
-            .createNode(commonPrefix, value, Collections.singletonList(newChild), false);
+          searchResult.parent.updateOutgoingEdge(newParent);
 
-        searchResult.parent.updateOutgoingEdge(newParent);
-
-        return null;
-      }
-      case INCOMPLETE_MATCH_TO_END_OF_EDGE: {
-        CharSequence keySuffix = key.subSequence(searchResult.matched, key.length());
-        Node newChild = nodeFactory.createNode(keySuffix, value, Collections.emptyList(), false);
-
-        Node node = searchResult.node;
-
-        // Clone the current node adding the new child
-        List<Node> edges = new ArrayList<>(node.getOutgoingEdges().size() + 1);
-        edges.addAll(node.getOutgoingEdges());
-        edges.add(newChild);
-        Node clonedNode = nodeFactory
-            .createNode(node.getIncomingEdge(), node.getValue(), edges, node == root);
-
-        if (node == root) {
-          this.root = clonedNode;
-        } else {
-          searchResult.parent.updateOutgoingEdge(clonedNode);
+          return null;
         }
+        case INCOMPLETE_MATCH_TO_END_OF_EDGE: {
+          CharSequence keySuffix = key.subSequence(searchResult.matched, key.length());
+          Node newChild = nodeFactory.createNode(keySuffix, value, Collections.emptyList(), false);
 
-        return null;
+          Node node = searchResult.node;
+
+          // Clone the current node adding the new child
+          List<Node> edges = new ArrayList<>(node.getOutgoingEdges().size() + 1);
+          edges.addAll(node.getOutgoingEdges());
+          edges.add(newChild);
+          Node clonedNode = nodeFactory
+              .createNode(node.getIncomingEdge(), node.getValue(), edges, node == root);
+
+          if (node == root) {
+            this.root = clonedNode;
+          } else {
+            searchResult.parent.updateOutgoingEdge(clonedNode);
+          }
+
+          return null;
+        }
+        case INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE: {
+          //Search found a difference in characters between the kye and the characters in the middle
+          // of the edge in the current node, adn the key still has trailing unmatched characters.
+          // -> Split the node in three:
+          // Let's call node found:NF
+          // 1.Create a new node N1 containing the unmatched characters from the rest of the day,
+          // 2.Create a new node N2 containing the unmatched characters from the rest of the edge in NF,
+          // and copy the original edges and the value from NF unmodified into N2
+          // 3.Create a new node N3, which will be the split node, containing the matched characters from
+          // the key and the edge, and add N1 and N2 as child node of N3
+          // Re-add N3 to the parent node of NF, effectively replacing NF in the tree
+
+          Node node = searchResult.node;
+          CharSequence keyCharsFromStartOfNodeFound = key
+              .subSequence(searchResult.matched - searchResult.found, key.length());
+          CharSequence commonPrefix = CharSequences
+              .getCommonPrefix(keyCharsFromStartOfNodeFound, node.getIncomingEdge());
+          CharSequence suffixFromExistingEdge = CharSequences
+              .subtractPrefix(node.getIncomingEdge(), commonPrefix);
+          CharSequence suffixFromKey = key.subSequence(searchResult.matched, key.length());
+
+          // Create new nodes...
+          Node n1 = nodeFactory.createNode(suffixFromKey, value, Collections.emptyList(), false);
+          Node n2 = nodeFactory
+              .createNode(suffixFromExistingEdge, node.getValue(), node.getOutgoingEdges(), false);
+          Node n3 = nodeFactory.createNode(commonPrefix, null, Arrays.asList(n1, n2), false);
+
+          searchResult.parent.updateOutgoingEdge(n3);
+
+          return null;
+        }
+        default: {
+          throw new IllegalStateException(
+              "Unexpected classification for search result: "
+                  + searchResult);
+        }
       }
-      case INCOMPLETE_MATCH_TO_MIDDLE_OF_EDGE: {
-        //Search found a difference in characters between the kye and the characters in the middle
-        // of the edge in the current node, adn the key still has trailing unmatched characters.
-        // -> Split the node in three:
-        // Let's call node found:NF
-        // 1.Create a new node N1 containing the unmatched characters from the rest of the day,
-        // 2.Create a new node N2 containing the unmatched characters from the rest of the edge in NF,
-        // and copy the original edges and the value from NF unmodified into N2
-        // 3.Create a new node N3, which will be the split node, containing the matched characters from
-        // the key and the edge, and add N1 and N2 as child node of N3
-        // Re-add N3 to the parent node of NF, effectively replacing NF in the tree
-
-        Node node = searchResult.node;
-        CharSequence keyCharsFromStartOfNodeFound = key
-            .subSequence(searchResult.matched - searchResult.found, key.length());
-        CharSequence commonPrefix = CharSequences
-            .getCommonPrefix(keyCharsFromStartOfNodeFound, node.getIncomingEdge());
-        CharSequence suffixFromExistingEdge = CharSequences
-            .subtractPrefix(node.getIncomingEdge(), commonPrefix);
-        CharSequence suffixFromKey = key.subSequence(searchResult.matched, key.length());
-
-        // Create new nodes...
-        Node n1 = nodeFactory.createNode(suffixFromKey, value, Collections.emptyList(), false);
-        Node n2 = nodeFactory
-            .createNode(suffixFromExistingEdge, node.getValue(), node.getOutgoingEdges(), false);
-        Node n3 = nodeFactory.createNode(commonPrefix, null, Arrays.asList(n1, n2), false);
-
-        searchResult.parent.updateOutgoingEdge(n3);
-
-        return null;
-      }
-      default: {
-        throw new IllegalStateException(
-            "Unexpected classification for search result: "
-                + searchResult);
-      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
