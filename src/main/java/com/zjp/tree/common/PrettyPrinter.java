@@ -29,17 +29,18 @@ public class PrettyPrinter {
     if (node.getValue() != null) {
       label.append(" (").append(node.getValue()).append(")");
     }
-    ap.append(prefix).append(isTail ? isRoot ? "" : "└── ○ " : "├── ○ ")
+    ap.append(prefix).append(isTail ? isRoot ? "" : "└──  " : "├──  ")
         .append(label).append("\n");
 
     List<Node> children = node.getOutgoingEdges();
+    String childPrefix = prefix + (isTail ? isRoot ? "" : "     " : "│    ");
     for (int i = 0, size = children.size() - 1; i < size; i++) {
-      prettyPrint(children.get(i), ap, prefix + (isTail ? isRoot ? "" : "     " : "│    "), false,
+      prettyPrint(children.get(i), ap, childPrefix, false,
           false);
     }
     if (!children.isEmpty()) {
       prettyPrint(children.get(children.size() - 1), ap,
-          prefix + (isTail ? isRoot ? "" : "     " : "│    "), true, false);
+          childPrefix, true, false);
     }
 
   }

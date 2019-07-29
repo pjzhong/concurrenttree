@@ -6,7 +6,7 @@ import com.zjp.tree.node.NodeFactory;
 import java.util.List;
 import java.util.Objects;
 
-public class DefaultCharArrayNodeFactory implements NodeFactory {
+public class DefaultCharSequenceNodeFactory implements NodeFactory {
 
   @Override
   public Node createNode(CharSequence edgeCharacters, Object value, List<Node> childNodes,
@@ -17,6 +17,6 @@ public class DefaultCharArrayNodeFactory implements NodeFactory {
       throw new NullPointerException(
           "Invalid edge characters for non-root node: " + CharSequences.toString(edgeCharacters));
     }
-    return new CharArrayNodeDefault(edgeCharacters, value, childNodes);
+    return new CharSequenceNodeDefault(edgeCharacters, value, childNodes);
   }
 }

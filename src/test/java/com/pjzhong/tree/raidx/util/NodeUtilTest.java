@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
-import com.zjp.tree.node.impl.DefaultCharArrayNodeFactory;
+import com.zjp.tree.node.impl.DefaultCharSequenceNodeFactory;
 import com.zjp.tree.node.util.NodeUtil;
 import org.junit.Test;
 
@@ -16,7 +16,7 @@ public class NodeUtilTest {
 
   @Test
 	public void testBinarySearchForEdge() {
-		NodeFactory nodeFactory = new DefaultCharArrayNodeFactory();
+		NodeFactory nodeFactory = new DefaultCharSequenceNodeFactory();
 		Node[] nodes = new Node[] {
 				nodeFactory.createNode("A", null, Collections.emptyList(),
 						false),

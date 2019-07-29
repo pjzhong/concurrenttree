@@ -5,35 +5,35 @@ import static org.junit.Assert.assertEquals;
 import com.zjp.tree.common.PrettyPrinter;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
-import com.zjp.tree.node.impl.DefaultCharArrayNodeFactory;
+import com.zjp.tree.node.impl.DefaultCharSequenceNodeFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Test;
 
 public class PrettyPrinterTest {
 
-  private NodeFactory nodeFactory = new DefaultCharArrayNodeFactory();
+  private NodeFactory nodeFactory = new DefaultCharSequenceNodeFactory();
 
   @Test
   public void testPrettyPrint_ToString() {
     Node root = buildTreeByHand();
     String expected =
         "○\n"
-            + "└── ○ B (1)\n"
-            + "     └── ○ A (2)\n"
-            + "          └── ○ N (3)\n"
-            + "               ├── ○ AN (5)\n"
-            + "               │    └── ○ A (6)\n"
-            + "               └── ○ DANA (4)\n";
+            + "└──  B (1)\n"
+            + "     └──  A (2)\n"
+            + "          └──  N (3)\n"
+            + "               ├──  AN (5)\n"
+            + "               │    └──  A (6)\n"
+            + "               └──  DANA (4)\n";
     assertEquals(expected, PrettyPrinter.prettyPrint(() -> root));
 
     String expected2 =
         "○ B (1)\n"
-            + "└── ○ A (2)\n"
-            + "     └── ○ N (3)\n"
-            + "          ├── ○ AN (5)\n"
-            + "          │    └── ○ A (6)\n"
-            + "          └── ○ DANA (4)\n";
+            + "└──  A (2)\n"
+            + "     └──  N (3)\n"
+            + "          ├──  AN (5)\n"
+            + "          │    └──  A (6)\n"
+            + "          └──  DANA (4)\n";
     assertEquals(expected2, PrettyPrinter.prettyPrint(() -> root.getOutgoingEdge('B')));
   }
 
@@ -41,13 +41,13 @@ public class PrettyPrinterTest {
     final Node n1, n2, n3, n4, n5, n6;
 
     String expected =
-        "○\n"
-            + "└── ○ B (1)\n"
-            + "     └── ○ A (2)\n"
-            + "          └── ○ N (3)\n"
-            + "               ├── ○ AN (5)\n"
-            + "               │    └── ○ A (6)\n"
-            + "               └── ○ DANA (4)\n";
+        "\n"
+            + "└──  B (1)\n"
+            + "     └──  A (2)\n"
+            + "          └──  N (3)\n"
+            + "               ├──  AN (5)\n"
+            + "               │    └──  A (6)\n"
+            + "               └──  DANA (4)\n";
 
     n6 = nodeFactory.createNode("A", 6, Collections.emptyList(), false);
     n5 = nodeFactory.createNode("AN", 5, Collections.singletonList(n6), false);

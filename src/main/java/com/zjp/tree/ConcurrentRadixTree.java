@@ -2,7 +2,6 @@ package com.zjp.tree;
 
 import com.zjp.tree.ConcurrentRadixTree.SearchResult.Classification;
 import com.zjp.tree.common.CharSequences;
-import com.zjp.tree.common.PrettyPrinter;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
 import com.zjp.tree.node.util.PrettyPrintable;
@@ -38,6 +37,12 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
   }
 
   public O put(CharSequence key, O value) {
+    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+    O existing = (O) putInternal(key, value, true);
+    return existing;
+  }
+
+  public O putIfAbsent(CharSequence key, O value) {
     @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
     O existing = (O) putInternal(key, value, false);
     return existing;

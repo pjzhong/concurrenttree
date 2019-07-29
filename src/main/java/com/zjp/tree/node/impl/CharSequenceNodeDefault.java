@@ -1,6 +1,5 @@
 package com.zjp.tree.node.impl;
 
-import com.zjp.tree.common.CharSequences;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.util.AtomicReferenceArrayListAdapter;
 import com.zjp.tree.node.util.NodeUtil;
@@ -9,9 +8,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public class CharArrayNodeDefault implements Node {
+public class CharSequenceNodeDefault implements Node {
 
-  private final char[] incomingEdgeCharArray;
+  private final CharSequence incomingEdgeCharSequence;
 
   private final AtomicReferenceArray<Node> outgoingEdges;
 
@@ -19,7 +18,7 @@ public class CharArrayNodeDefault implements Node {
 
   private final Object value;
 
-  public CharArrayNodeDefault(CharSequence sequence, Object value,
+  public CharSequenceNodeDefault(CharSequence sequence, Object value,
       List<Node> outgoingEdges) {
 
     Node[] childArray = outgoingEdges.toArray(new Node[0]);
@@ -29,13 +28,13 @@ public class CharArrayNodeDefault implements Node {
     this.outgoingEdges = new AtomicReferenceArray<>(childArray);
     this.outgoingEdgesList = new AtomicReferenceArrayListAdapter<>(
         this.outgoingEdges);
-    this.incomingEdgeCharArray = CharSequences.toCharArray(sequence);
+    this.incomingEdgeCharSequence = sequence;
     this.value = value;
   }
 
   @Override
   public Character getIncomingEdgeFirstCharacter() {
-    return incomingEdgeCharArray[0];
+    return incomingEdgeCharSequence.charAt(0);
   }
 
   @Override
@@ -69,11 +68,20 @@ public class CharArrayNodeDefault implements Node {
 
   @Override
   public CharSequence getIncomingEdge() {
-    return new StringBuilder(incomingEdgeCharArray.length).append(incomingEdgeCharArray);
+    return incomingEdgeCharSequence;
   }
 
   @Override
   public Object getValue() {
     return value;
+  }
+
+  @Override
+  public String toString() {
+    return "Node{"
+        + "edge=" + incomingEdgeCharSequence
+        + ", value=" + value
+        + ", edges=" + getOutgoingEdges().size()
+        + "}";
   }
 }
