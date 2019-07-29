@@ -18,7 +18,7 @@ public class CharSequences {
     if (charSequence instanceof String) {
       return (String) charSequence;
     }
-    return new StringBuilder(charSequence.length()).append(charSequence).toString();
+    return new StringBuilder().append(charSequence).toString();
   }
 
   public static CharSequence getCommonPrefix(CharSequence a, CharSequence b) {

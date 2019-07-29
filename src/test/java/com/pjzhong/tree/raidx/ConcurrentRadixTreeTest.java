@@ -24,12 +24,12 @@ public class ConcurrentRadixTreeTest {
 
     String expected =
         "○\n"
-        + "└── ○ B (1)\n"
-        + "     └── ○ A (2)\n"
-        + "          └── ○ N (3)\n"
-        + "               ├── ○ AN (5)\n"
-        + "               │    └── ○ A (6)\n"
-        + "               └── ○ DANA (4)\n";
+            + "└── ○ B (1)\n"
+            + "     └── ○ A (2)\n"
+            + "          └── ○ N (3)\n"
+            + "               ├── ○ AN (5)\n"
+            + "               │    └── ○ A (6)\n"
+            + "               └── ○ DANA (4)\n";
 
     n6 = nodeFactory.createNode("A", 6, Collections.emptyList(), false);
     n5 = nodeFactory.createNode("AN", 5, Collections.singletonList(n6), false);
@@ -53,6 +53,20 @@ public class ConcurrentRadixTreeTest {
             "└── ○ A (1)\n";
     assertNull(tree.put("A", 1));
     assertThat(1, is(tree.getValueForExactKey("A")));
+    String actual = PrettyPrinter.prettyPrint(tree);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  public void test_ChildNodeSorting() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("B", 1);
+    tree.put("A", 2);
+
+    String expected =
+        "○\n"
+            + "├── ○ A (2)\n"
+            + "└── ○ B (1)\n";
     String actual = PrettyPrinter.prettyPrint(tree);
     assertEquals(expected, actual);
   }
