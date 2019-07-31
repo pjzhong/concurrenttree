@@ -153,4 +153,20 @@ public class ConcurrentRadixTreeTest {
     assertThat(1, is(nowExisting));
     assertThat(1, is(tree.getValueForExactKey("FOO")));
   }
+
+  @Test
+  public void testGet() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("TEST", 1);
+    tree.put("TEAM", 2);
+    tree.put("TOAST", 3);
+
+    assertThat(1, is(tree.getValueForExactKey("TEST")));
+    assertThat(2, is(tree.getValueForExactKey("TEAM")));
+    assertThat(3, is(tree.getValueForExactKey("TOAST")));
+    assertNull(tree.getValueForExactKey("T"));
+    assertNull(tree.getValueForExactKey("TE"));
+    assertNull(tree.getValueForExactKey("E"));
+    assertNull(tree.getValueForExactKey(""));
+  }
 }
