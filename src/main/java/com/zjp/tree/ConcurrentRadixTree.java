@@ -50,6 +50,107 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
     return null;
   }
 
+  public boolean remove(CharSequence key) {
+    Objects.requireNonNull(key);
+
+    acquireWriteLock();
+    try {
+      SearchResult result = searchTree(key);
+
+      switch (result.classification) {
+        case EXACT_MATCH: {
+          Node node = result.node;
+          if (node.getValue() == null) {
+            //This node was created automatically as a split between two branches
+            //(implicit node） No need to remove it
+            return false;
+          }
+
+          List<Node> childEdges = node.getOutgoingEdges();
+          if (childEdges.size() > 1) {
+            //This node has more than one child, so if we delete the value from this node, we still
+            //node to leave a similar node in place to act as the split between the child edges.
+            //Just delete the value associated with this node.
+            Node cloned = nodeFactory
+                .createNode(node.getIncomingEdge(), null, node.getOutgoingEdges(), false);
+            //Re-add the replacement node to the parent...
+            result.parent.updateOutgoingEdge(cloned);
+          } else if (childEdges.size() == 1) {
+            //Node has one child edge.
+            //Create a new node which is the concatenation of the edges from this node and
+            // its child, and which ahs the outgoing edges of the child and the value from the child.
+            Node child = childEdges.get(0);
+            CharSequence concatenateEdges = CharSequences
+                .concatenate(node.getIncomingEdge(), child.getIncomingEdge());
+            Node mergeNode = nodeFactory
+                .createNode(concatenateEdges, child.getValue(), child.getOutgoingEdges(), false);
+            // Re-add the merged node to the parent...
+            result.parent.updateOutgoingEdge(mergeNode);
+          } else {
+            // Node has no children. Delete this node from its parent.
+            // which involves re-creating the parent rather than simply updating it child edge
+            // (this is why we need grandParent)
+            // However if this would leave the parent with only one remaining child edge,
+            // and the parent itself has no value(is a split node), and the parent is not the root node
+            // (a special case which we never merge), then we also need to merge the parent with its
+            // remaining child.
+
+            Node parent = result.parent;
+            List<Node> currentEdgesFromParent = parent.getOutgoingEdges();
+
+            // Create a list of the outgoing edges of the parent which will remain
+            // If we remove this child...
+            // User a non-resizeable list, as sanity check to force ArraysIndexOutOfBounds...
+            List<Node> newEdgesOfParent = Arrays
+                .asList(new Node[currentEdgesFromParent.size() - 1]);
+            for (int i = 0, added = 0, size = currentEdgesFromParent.size(); i < size; i++) {
+              Node n = currentEdgesFromParent.get(i);
+              if (n != node) {
+                newEdgesOfParent.set(added++, n);
+              }
+            }
+
+            //Node the parent might actually be the root node(which we should never merge)...
+            boolean parentIsRoot = (parent == root);
+            Node newParent;
+            if (newEdgesOfParent.size() == 1 && parent.getValue() == null && !parentIsRoot) {
+              // Parent is a non-root split node with only one remaining child, which can be merged.
+              Node onlyChild = newEdgesOfParent.get(0);
+
+              // Merge the parent with its only remaining child...
+              CharSequence concatenatedEdges = CharSequences
+                  .concatenate(parent.getIncomingEdge(), onlyChild.getIncomingEdge());
+              newParent = nodeFactory
+                  .createNode(concatenatedEdges, onlyChild.getValue(), onlyChild.getOutgoingEdges(),
+                      parentIsRoot);
+            } else {
+              // Parent is a node which either has a value of its own, has more than one remaining
+              // child, or is actually the root node(we never merge thr root node).
+              // Create new parent node which is the same as is currently just without
+              // the edge to the node being deleted.
+              newParent = nodeFactory
+                  .createNode(parent.getIncomingEdge(), parent.getValue(), newEdgesOfParent,
+                      parentIsRoot);
+            }
+
+            if (parentIsRoot) {
+              // Replace the root node
+              this.root = newParent;
+            } else {
+              // Re-add the parent node to its parent..
+              result.grandParent.updateOutgoingEdge(newParent);
+            }
+          }
+          return true;
+        }
+        default:
+          return false;
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
   public O put(CharSequence key, O value) {
     @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
     O existing = (O) putInternal(key, value, true);
@@ -76,6 +177,8 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
     return count;
   }
 
+  // ------------- Helper method for put() -------------
+
   Object putInternal(CharSequence key, Object value, boolean overwrite) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(value);
@@ -93,7 +196,8 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
           Object existing = searchResult.node.getValue();
           if (overwrite || existing == null) {
             Node node = searchResult.node;
-            Node replacement = nodeFactory.createNode(key, value, node.getOutgoingEdges(), false);
+            Node replacement = nodeFactory
+                .createNode(node.getIncomingEdge(), value, node.getOutgoingEdges(), false);
             searchResult.parent.updateOutgoingEdge(replacement);
           }
           return existing;

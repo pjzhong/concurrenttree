@@ -2,9 +2,11 @@ package com.pjzhong.tree.raidx;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import com.zjp.tree.ConcurrentRadixTree;
 import com.zjp.tree.common.PrettyPrinter;
@@ -244,5 +246,90 @@ public class ConcurrentRadixTreeTest {
     assertNull(tree.getValueForExactKey("TE"));
     assertNull(tree.getValueForExactKey("E"));
     assertNull(tree.getValueForExactKey(""));
+  }
+
+  @Test
+  public void testSize() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    assertEquals(0, tree.size());
+    tree.put("TEST", 1);
+    assertEquals(1, tree.size());
+    tree.put("TOAST", 2);
+    assertEquals(2, tree.size());
+    tree.put("TEAM", 3);
+    assertEquals(3, tree.size());
+    tree.put("TEST", 4);
+    assertEquals(3, tree.size());
+
+    assertFalse(tree.remove("FOO"));
+    assertEquals(3, tree.size());
+
+    assertTrue(tree.remove("TOAST"));
+    assertEquals(2, tree.size());
+    assertTrue(tree.remove("TEAM"));
+    assertEquals(1, tree.size());
+    assertTrue(tree.remove("TEST"));
+    assertEquals(0, tree.size());
+
+    assertFalse(tree.remove("NOT_EXISTS"));
+    assertEquals(0, tree.size());
+  }
+
+  @Test
+  public void testRemove_MoreThanOneChildEdge() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+    tree.put("FOOBAR", 2);
+    tree.put("FOOD", 3);
+
+    String expected =
+        "○\n"
+            + "└──  FOO (1)\n"
+            + "     ├──  BAR (2)\n"
+            + "     └──  D (3)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("FOO"));
+    String afterRemove =
+        "○\n"
+            + "└──  FOO\n"
+            + "     ├──  BAR (2)\n"
+            + "     └──  D (3)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_ExactlyOneChildEdge() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+    tree.put("FOOBAR", 2);
+    tree.put("FOOBARBAZ", 3);
+
+    String expected =
+        "○\n"
+            + "└──  FOO (1)\n"
+            + "     └──  BAR (2)\n"
+            + "          └──  BAZ (3)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("FOO"));
+    String afterRemove =
+        "○\n"
+            + "└──  FOOBAR (2)\n"
+            + "     └──  BAZ (3)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_ZeroChildEdges_DirectChildOfRoot() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+    tree.put("BAR", 2);
+
+    String expected =
+        "○\n"
+            + "├──  BAR (2)\n"
+            + "└──  FOO (1)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
   }
 }

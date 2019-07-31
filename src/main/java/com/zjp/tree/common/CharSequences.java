@@ -21,6 +21,10 @@ public class CharSequences {
     return new StringBuilder().append(charSequence).toString();
   }
 
+  public static CharSequence concatenate(CharSequence a, CharSequence b) {
+    return new StringBuilder().append(a).append(b);
+  }
+
   public static CharSequence getCommonPrefix(CharSequence a, CharSequence b) {
     int minLength = Math.min(a.length(), b.length());
     for (int i = 0; i < minLength; i++) {
