@@ -109,6 +109,47 @@ public class ConcurrentRadixTreeTest {
             + "└──  FOO\n"
             + "     ├──  BAR (1)\n"
             + "     └──  D (2)\n";
+    assertThat(1, is(tree.getValueForExactKey("FOOBAR")));
+    assertThat(2, is(tree.getValueForExactKey("FOOD")));
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testPut_SplitWithImplicitNodes() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOOBAR", 1);
+    tree.put("FOOD", 2);
+    tree.put("F", 3);
+
+    assertThat(1, is(tree.getValueForExactKey("FOOBAR")));
+    assertThat(2, is(tree.getValueForExactKey("FOOD")));
+    assertThat(3, is(tree.getValueForExactKey("F")));
+    String expected =
+        "○\n"
+            + "└──  F (3)\n"
+            + "     └──  OO\n"
+            + "          ├──  BAR (1)\n"
+            + "          └──  D (2)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testPut_SplitWithImplicitNodesReverse() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("F", 3);
+    tree.put("FOOBAR", 1);
+    tree.put("FOOD", 2);
+
+    assertThat(1, is(tree.getValueForExactKey("FOOBAR")));
+    assertThat(2, is(tree.getValueForExactKey("FOOD")));
+    assertThat(3, is(tree.getValueForExactKey("F")));
+
+    String expected =
+        "○\n"
+            + "└──  F (3)\n"
+            + "     └──  OO\n"
+            + "          ├──  BAR (1)\n"
+            + "          └──  D (2)\n";
     assertEquals(expected, PrettyPrinter.prettyPrint(tree));
   }
 
@@ -152,6 +193,41 @@ public class ConcurrentRadixTreeTest {
 
     assertThat(1, is(nowExisting));
     assertThat(1, is(tree.getValueForExactKey("FOO")));
+  }
+
+  @Test
+  public void testPutIfAbsent_SplitNode() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+
+    Integer p1 = tree.putIfAbsent("FOOBAR", 1);
+    assertNull(p1);
+    Integer p2 = tree.putIfAbsent("FOOD", 1);
+    assertNull(p2);
+
+    Integer p3 = tree.putIfAbsent("FOO", 2);
+    assertNull(p3);
+
+    assertThat(1, is(tree.getValueForExactKey("FOOBAR")));
+    assertThat(1, is(tree.getValueForExactKey("FOOD")));
+    assertThat(2, is(tree.getValueForExactKey("FOO")));
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testPutInternal_KeyNullValidation() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put(null, 1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPutInternal_KeyEmptyValidation() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("", 1);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testPutInternal_ValueNullValidation() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("foo", null);
   }
 
   @Test
