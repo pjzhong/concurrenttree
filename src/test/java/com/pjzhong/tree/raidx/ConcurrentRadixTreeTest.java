@@ -331,5 +331,148 @@ public class ConcurrentRadixTreeTest {
             + "├──  BAR (2)\n"
             + "└──  FOO (1)\n";
     assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("FOO"));
+    String afterRemove =
+        "○\n"
+            + "└──  BAR (2)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_LastRemainingKey() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+
+    String expected = "○\n"
+        + "└──  FOO (1)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("FOO"));
+    String afterRemove = "○\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_ZeroChildEdges_OneStepFromRoot() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+    tree.put("FOOBAR", 2);
+
+    String expected =
+        "○\n"
+            + "└──  FOO (1)\n"
+            + "     └──  BAR (2)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("FOOBAR"));
+    String afterRemove =
+        "○\n"
+            + "└──  FOO (1)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_ZeroChildEdges_SeveralStepsFromRoot() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+    tree.put("FOOBAR", 2);
+    tree.put("FOOBARBAZ", 3);
+
+    String expected =
+        "○\n"
+            + "└──  FOO (1)\n"
+            + "     └──  BAR (2)\n"
+            + "          └──  BAZ (3)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("FOOBARBAZ"));
+    String afterRemove =
+        "○\n"
+            + "└──  FOO (1)\n"
+            + "     └──  BAR (2)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_DoNotRemoveSplitNode() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOOBAR", 1);
+    tree.put("FOOD", 2);
+
+    String expected = "○\n"
+        + "└──  FOO\n"
+        + "     ├──  BAR (1)\n"
+        + "     └──  D (2)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertFalse(tree.remove("FOO"));
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_MergeSplitNode() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("TEST", 1);
+    tree.put("TEAM", 2);
+    tree.put("TOAST", 3);
+    String expected =
+        "○\n"
+            + "└──  T\n"
+            + "     ├──  E\n"
+            + "     │    ├──  AM (2)\n"
+            + "     │    └──  ST (1)\n"
+            + "     └──  OAST (3)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("TEST"));
+    String afterRemove =
+        "○\n"
+            + "└──  T\n"
+            + "     ├──  EAM (2)\n"
+            + "     └──  OAST (3)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_DoNotMergeSplitNodeWithValue() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("TEST", 1);
+    tree.put("TEAM", 2);
+    tree.put("TOAST", 3);
+    tree.put("TE", 4);
+    String expected =
+        "○\n"
+            + "└──  T\n"
+            + "     ├──  E (4)\n"
+            + "     │    ├──  AM (2)\n"
+            + "     │    └──  ST (1)\n"
+            + "     └──  OAST (3)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertTrue(tree.remove("TEST"));
+    String afterRemove =
+        "○\n"
+            + "└──  T\n"
+            + "     ├──  E (4)\n"
+            + "     │    └──  AM (2)\n"
+            + "     └──  OAST (3)\n";
+    assertEquals(afterRemove, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testRemove_noSuchKey() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("FOO", 1);
+    tree.put("BAR", 2);
+
+    String expected =
+        "○\n"
+            + "├──  BAR (2)\n"
+            + "└──  FOO (1)\n";
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+
+    assertFalse(tree.remove("TEST"));
+    assertEquals(expected, PrettyPrinter.prettyPrint(tree));
   }
 }
