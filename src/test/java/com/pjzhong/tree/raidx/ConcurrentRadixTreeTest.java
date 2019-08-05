@@ -9,6 +9,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.zjp.tree.ConcurrentRadixTree;
+import com.zjp.tree.common.Iterables;
 import com.zjp.tree.common.PrettyPrinter;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
@@ -474,5 +475,33 @@ public class ConcurrentRadixTreeTest {
 
     assertFalse(tree.remove("TEST"));
     assertEquals(expected, PrettyPrinter.prettyPrint(tree));
+  }
+
+  @Test
+  public void testGetKeysForPrefix() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("TEST", 1);
+    tree.put("TEAM", 2);
+    tree.put("TOAST", 3);
+    tree.put("TEA", 4);
+    tree.put("COFFEE", 5);
+
+    assertEquals("[COFFEE, TEA, TEAM, TEST, TOAST]",
+        Iterables.toString(tree.getKeysStartingWith("")));
+    assertEquals("[COFFEE]", Iterables.toString(tree.getKeysStartingWith("C")));
+    assertEquals("[COFFEE]", Iterables.toString(tree.getKeysStartingWith("COFFEE")));
+    assertEquals("[]", Iterables.toString(tree.getKeysStartingWith("COFFEES")));
+    assertEquals("[TEA, TEAM, TEST, TOAST]", Iterables.toString(tree.getKeysStartingWith("T")));
+    assertEquals("[TEA, TEAM, TEST]", Iterables.toString(tree.getKeysStartingWith("TE")));
+    assertEquals("[TEA, TEAM]", Iterables.toString(tree.getKeysStartingWith("TEA")));
+    assertEquals("[TOAST]", Iterables.toString(tree.getKeysStartingWith("TO")));
+  }
+
+  @Test
+  public void testGetClosetKeys() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("COD", 1);
+    tree.put("CODFISH", 2);
+    tree.put("COFFEE", 3);
   }
 }

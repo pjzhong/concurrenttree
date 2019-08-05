@@ -19,12 +19,21 @@ public class CharSequencesTest {
   }
 
   @Test
-  public void testSubstractPrefix() {
+  public void testGetSuffix() {
+    String str = "BANANA";
+    assertEquals("BANANA", CharSequences.getSuffix(str, 0));
+    assertEquals("ANA", CharSequences.getSuffix(str, 3));
+    assertEquals("", CharSequences.getSuffix(str, 6));
+    assertEquals("", CharSequences.getSuffix(str, 7));
+  }
+
+  @Test
+  public void testSubtractPrefix() {
     assertEquals("JJ", CharSequences.subtractPrefix("ZZZZJJ", "ZZZZ"));
     assertEquals("", CharSequences.subtractPrefix("ZZZZJJ", "ZZZZJJ"));
     assertEquals("", CharSequences.subtractPrefix("ZZZZJJ", "ZZZZJJPPPPP"));
-    assertEquals("", CharSequences.subtractPrefix("","ZZZZJJ"));
-    assertEquals("ZZZZJJ", CharSequences.subtractPrefix("ZZZZJJ",""));
+    assertEquals("", CharSequences.subtractPrefix("", "ZZZZJJ"));
+    assertEquals("ZZZZJJ", CharSequences.subtractPrefix("ZZZZJJ", ""));
 
   }
 

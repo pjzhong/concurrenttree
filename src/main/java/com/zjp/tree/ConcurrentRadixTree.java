@@ -2,6 +2,7 @@ package com.zjp.tree;
 
 import com.zjp.tree.ConcurrentRadixTree.SearchResult.Classification;
 import com.zjp.tree.common.CharSequences;
+import com.zjp.tree.common.LazyIterator;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
 import com.zjp.tree.node.util.PrettyPrintable;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +50,25 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
       return value;
     }
     return null;
+  }
+
+  public Iterable<CharSequence> getKeysStartingWith(CharSequence prefix) {
+    SearchResult result = searchTree(prefix);
+    Classification type = result.classification;
+    switch (type) {
+      case EXACT_MATCH: {
+        return getDescendantsKeys(prefix, result.node);
+      }
+      case KEY_ENDS_MID_EDGE: {
+        CharSequence edgeSuffix = CharSequences
+            .getSuffix(result.node.getIncomingEdge(), result.found);
+        prefix = CharSequences.concatenate(prefix, edgeSuffix);
+        return getDescendantsKeys(prefix, result.node);
+      }
+      default: {
+        return Collections.emptySet();
+      }
+    }
   }
 
   public boolean remove(CharSequence key) {
@@ -280,6 +301,62 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
       }
     } finally {
       releaseWriteLock();
+    }
+  }
+
+  Iterable<CharSequence> getDescendantsKeys(CharSequence key, Node node) {
+    return () -> new LazyIterator<CharSequence>() {
+      Iterator<NodeKeyPair> descendants = lazyTraverseDescendants(key, node).iterator();
+
+      @Override
+      protected CharSequence computeNext() {
+        while (descendants.hasNext()) {
+          NodeKeyPair pair = descendants.next();
+          Object value = pair.node.getValue();
+          if (value != null) {
+            return CharSequences.toString(pair.key);
+          }
+        }
+        return endOfData();
+      }
+    };
+  }
+
+  protected Iterable<NodeKeyPair> lazyTraverseDescendants(final CharSequence key, final Node node) {
+    return () -> new LazyIterator<NodeKeyPair>() {
+
+      Deque<NodeKeyPair> stack = new LinkedList<>();
+
+      {
+        stack.push(new NodeKeyPair(node, key));
+      }
+
+      @Override
+      protected NodeKeyPair computeNext() {
+        if (stack.isEmpty()) {
+          return endOfData();
+        }
+        NodeKeyPair current = stack.pop();
+        List<Node> childNodes = current.node.getOutgoingEdges();
+
+        for (int i = childNodes.size(); i > 0; i--) {
+          Node child = childNodes.get(i - 1);
+          stack.push(new NodeKeyPair(child,
+              CharSequences.concatenate(current.key, child.getIncomingEdge())));
+        }
+        return current;
+      }
+    };
+  }
+
+  protected static class NodeKeyPair {
+
+    public final Node node;
+    public final CharSequence key;
+
+    public NodeKeyPair(Node node, CharSequence key) {
+      this.node = node;
+      this.key = key;
     }
   }
 

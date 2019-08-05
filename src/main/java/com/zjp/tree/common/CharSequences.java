@@ -43,4 +43,12 @@ public class CharSequences {
     }
     return main.subSequence(startIdx, mainLength);
   }
+
+  public static CharSequence getSuffix(CharSequence input, int startIndex) {
+    if (startIndex >= input.length()) {
+      return "";
+    }
+
+    return input.subSequence(startIndex, input.length());
+  }
 }
