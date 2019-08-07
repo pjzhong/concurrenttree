@@ -60,10 +60,35 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
         return getDescendantsKeys(prefix, result.node);
       }
       case KEY_ENDS_MID_EDGE: {
+        // Append the remaining characters of the edge to the key.
+        // For example if we search for CO, but first matching node was COFFEE,
+        // the key associated with the first node should be COFFEE...
         CharSequence edgeSuffix = CharSequences
             .getSuffix(result.node.getIncomingEdge(), result.found);
         prefix = CharSequences.concatenate(prefix, edgeSuffix);
         return getDescendantsKeys(prefix, result.node);
+      }
+      default: {
+        return Collections.emptySet();
+      }
+    }
+  }
+
+  public Iterable<O> getValuesForKeyStartingWith(CharSequence prefix) {
+    SearchResult result = searchTree(prefix);
+    Classification type = result.classification;
+    switch (type) {
+      case EXACT_MATCH: {
+        return getDescendantsValues(prefix, result.node);
+      }
+      case KEY_ENDS_MID_EDGE: {
+        // Append the remaining characters of the edge to the key.
+        // For example if we search for CO, but first matching node was COFFEE,
+        // the key associated with the first node should be COFFEE...
+        CharSequence edgeSuffix = CharSequences
+            .getSuffix(result.node.getIncomingEdge(), result.found);
+        prefix = CharSequences.concatenate(prefix, edgeSuffix);
+        return getDescendantsValues(prefix, result.node);
       }
       default: {
         return Collections.emptySet();
@@ -315,6 +340,24 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
           Object value = pair.node.getValue();
           if (value != null) {
             return CharSequences.toString(pair.key);
+          }
+        }
+        return endOfData();
+      }
+    };
+  }
+
+  Iterable<O> getDescendantsValues(CharSequence key, Node node) {
+    return () -> new LazyIterator<O>() {
+      Iterator<NodeKeyPair> descendants = lazyTraverseDescendants(key, node).iterator();
+
+      @Override
+      protected O computeNext() {
+        while (descendants.hasNext()) {
+          NodeKeyPair pair = descendants.next();
+          Object value = pair.node.getValue();
+          if (value != null) {
+            return (O) value;
           }
         }
         return endOfData();

@@ -498,6 +498,26 @@ public class ConcurrentRadixTreeTest {
   }
 
   @Test
+  public void testGetValuesForPrefix() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("TEST", 1);
+    tree.put("TEAM", 2);
+    tree.put("TOAST", 3);
+    tree.put("TEA", 4);
+    tree.put("COFFEE", 5);
+
+
+    assertEquals("[5, 4, 2, 1, 3]", Iterables.toString(tree.getValuesForKeyStartingWith("")));
+    assertEquals("[5]", Iterables.toString(tree.getValuesForKeyStartingWith("C")));
+    assertEquals("[5]", Iterables.toString(tree.getValuesForKeyStartingWith("COFFEE")));
+    assertEquals("[]", Iterables.toString(tree.getValuesForKeyStartingWith("COFFEES")));
+    assertEquals("[4, 2, 1, 3]", Iterables.toString(tree.getValuesForKeyStartingWith("T")));
+    assertEquals("[4, 2, 1]", Iterables.toString(tree.getValuesForKeyStartingWith("TE")));
+    assertEquals("[4, 2]", Iterables.toString(tree.getValuesForKeyStartingWith("TEA")));
+    assertEquals("[3]", Iterables.toString(tree.getValuesForKeyStartingWith("TO")));
+  }
+
+  @Test
   public void testGetClosetKeys() {
     ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
     tree.put("COD", 1);

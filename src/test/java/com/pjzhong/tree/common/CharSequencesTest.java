@@ -28,6 +28,16 @@ public class CharSequencesTest {
   }
 
   @Test
+  public void testGetPrefix() {
+    String str = "BANANA";
+    assertEquals("", CharSequences.getPrefix(str, 0));
+    assertEquals("B", CharSequences.getPrefix(str, 1));
+    assertEquals("BAN", CharSequences.getPrefix(str, 3));
+    assertEquals("BANANA", CharSequences.getPrefix(str, 6));
+    assertEquals("BANANA", CharSequences.getPrefix(str, 7));
+  }
+
+  @Test
   public void testSubtractPrefix() {
     assertEquals("JJ", CharSequences.subtractPrefix("ZZZZJJ", "ZZZZ"));
     assertEquals("", CharSequences.subtractPrefix("ZZZZJJ", "ZZZZJJ"));

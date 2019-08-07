@@ -51,4 +51,12 @@ public class CharSequences {
 
     return input.subSequence(startIndex, input.length());
   }
+
+  public static CharSequence getPrefix(CharSequence input, int endIndex) {
+    if (endIndex > input.length()) {
+      return input;
+    }
+
+    return input.subSequence(0, endIndex);
+  }
 }
