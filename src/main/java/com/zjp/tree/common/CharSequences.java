@@ -1,5 +1,7 @@
 package com.zjp.tree.common;
 
+import java.util.Iterator;
+
 public class CharSequences {
 
   public static char[] toCharArray(CharSequence charSequence) {
@@ -58,5 +60,21 @@ public class CharSequences {
     }
 
     return input.subSequence(0, endIndex);
+  }
+
+  public static Iterable<CharSequence> generateSuffixes(CharSequence input) {
+    return () -> new Iterator<CharSequence>() {
+      int currentIndex = 0;
+
+      @Override
+      public boolean hasNext() {
+        return currentIndex < input.length();
+      }
+
+      @Override
+      public CharSequence next() {
+        return input.subSequence(currentIndex++, input.length());
+      }
+    };
   }
 }

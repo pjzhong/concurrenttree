@@ -477,6 +477,14 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
       this.node = node;
       this.key = key;
     }
+
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder("NodeKeyPair{");
+      sb.append("key=").append(key);
+      sb.append('}');
+      return sb.toString();
+    }
   }
 
   SearchResult searchTree(CharSequence key) {

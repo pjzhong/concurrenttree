@@ -2,6 +2,8 @@ package com.zjp.tree.common;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 public class CharSequencesTest {
@@ -43,6 +45,17 @@ public class CharSequencesTest {
     assertEquals("", CharSequences.subtractPrefix("ZZZZJJ", "ZZZZJJPPPPP"));
     assertEquals("", CharSequences.subtractPrefix("", "ZZZZJJ"));
     assertEquals("ZZZZJJ", CharSequences.subtractPrefix("ZZZZJJ", ""));
+
+  }
+
+  @Test
+  public void testGenerateSuffixes() {
+    CharSequence input = "BANANAS";
+    List<CharSequence> expected = Arrays.asList("BANANAS", "ANANAS", "NANAS", "ANAS", "NAS", "AS", "S");
+    int index = 0;
+    for (CharSequence c : CharSequences.generateSuffixes(input)) {
+      assertEquals(expected.get(index++), c);
+    }
 
   }
 
