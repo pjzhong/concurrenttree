@@ -1,8 +1,7 @@
-package com.pjzhong.tree.common;
+package com.zjp.tree.common;
 
 import static org.junit.Assert.assertEquals;
 
-import com.zjp.tree.common.CharSequences;
 import org.junit.Test;
 
 public class CharSequencesTest {

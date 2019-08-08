@@ -1,4 +1,4 @@
-package com.pjzhong.tree.raidx.node.impl.chararray;
+package com.zjp.tree.raidx.node.impl.chararray;
 
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.impl.CharSequenceNodeDefault;

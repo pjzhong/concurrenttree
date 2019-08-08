@@ -1,4 +1,4 @@
-package com.pjzhong.tree.raidx;
+package com.zjp.tree.raidx;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -506,7 +506,6 @@ public class ConcurrentRadixTreeTest {
     tree.put("TEA", 4);
     tree.put("COFFEE", 5);
 
-
     assertEquals("[5, 4, 2, 1, 3]", Iterables.toString(tree.getValuesForKeyStartingWith("")));
     assertEquals("[5]", Iterables.toString(tree.getValuesForKeyStartingWith("C")));
     assertEquals("[5]", Iterables.toString(tree.getValuesForKeyStartingWith("COFFEE")));
@@ -523,5 +522,27 @@ public class ConcurrentRadixTreeTest {
     tree.put("COD", 1);
     tree.put("CODFISH", 2);
     tree.put("COFFEE", 3);
+
+    assertEquals("[COD, CODFISH, COFFEE]", Iterables.toString(tree.getClosestKeys("COW")));
+    assertEquals("[COD, CODFISH, COFFEE]", Iterables.toString(tree.getClosestKeys("CX")));
+    assertEquals("[COD, CODFISH]", Iterables.toString(tree.getClosestKeys("COD")));
+    assertEquals("[COFFEE]", Iterables.toString(tree.getClosestKeys("COF")));
+    assertEquals("[CODFISH]", Iterables.toString(tree.getClosestKeys("CODF")));
+    assertEquals("[CODFISH]", Iterables.toString(tree.getClosestKeys("CODFISHASDASD")));
+  }
+
+  @Test
+  public void testGetClosetValues() {
+    ConcurrentRadixTree<Integer> tree = new ConcurrentRadixTree<>(nodeFactory);
+    tree.put("COD", 1);
+    tree.put("CODFISH", 2);
+    tree.put("COFFEE", 3);
+
+    assertEquals("[1, 2, 3]", Iterables.toString(tree.getClosestValues("COW")));
+    assertEquals("[1, 2, 3]", Iterables.toString(tree.getClosestValues("CX")));
+    assertEquals("[1, 2]", Iterables.toString(tree.getClosestValues("COD")));
+    assertEquals("[3]", Iterables.toString(tree.getClosestValues("COF")));
+    assertEquals("[2]", Iterables.toString(tree.getClosestValues("CODF")));
+    assertEquals("[2]", Iterables.toString(tree.getClosestValues("CODFISHASDASD")));
   }
 }

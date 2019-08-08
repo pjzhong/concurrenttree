@@ -1,8 +1,7 @@
-package com.pjzhong.tree.common;
+package com.zjp.tree.common;
 
 import static org.junit.Assert.assertEquals;
 
-import com.zjp.tree.common.PrettyPrinter;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
 import com.zjp.tree.node.impl.DefaultCharSequenceNodeFactory;
