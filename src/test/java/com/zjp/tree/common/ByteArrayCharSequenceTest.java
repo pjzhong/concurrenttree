@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import com.zjp.tree.node.impl.bytearry.ByteArrayCharSequence;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 public class ByteArrayCharSequenceTest {
@@ -86,6 +87,16 @@ public class ByteArrayCharSequenceTest {
   }
 
   @Test
+  public void testGenerateSuffixes() {
+    String input = "BANANAS";
+    ByteArrayCharSequence bacs = new ByteArrayCharSequence(input.getBytes(StandardCharsets.UTF_8),
+        0, input.length());
+    List<CharSequence> expected = Arrays
+        .asList("BANANAS", "ANANAS", "NANAS", "ANAS", "NAS", "AS", "S");
+    assertEquals(expected.toString(), Iterables.toString(CharSequences.generateSuffixes(bacs)));
+  }
+
+  @Test
   public void testToString() {
     byte[] bytes = "FOOBAR".getBytes(StandardCharsets.UTF_8);
     ByteArrayCharSequence bacs = new ByteArrayCharSequence(bytes, 0, bytes.length);
@@ -103,4 +114,6 @@ public class ByteArrayCharSequenceTest {
   public void testEncodeUtf8_UnsupportedChar() {
     ByteArrayCharSequence.toSingleByteUtf8Encoding("FOOBAR○");
   }
+
+
 }

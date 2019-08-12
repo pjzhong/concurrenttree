@@ -52,6 +52,24 @@ public class ByteArrayCharSequence implements CharSequence {
     return CharSequences.toString(this);
   }
 
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof CharSequence)) {
+      return false;
+    }
+    CharSequence that = (CharSequence) o;
+    return that.toString().equals(toString());
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
   public static byte[] toSingleByteUtf8Encoding(CharSequence charSequence) {
     final int length = charSequence.length();
     byte[] bytes = new byte[length];

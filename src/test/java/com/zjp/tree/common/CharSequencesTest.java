@@ -56,7 +56,6 @@ public class CharSequencesTest {
     for (CharSequence c : CharSequences.generateSuffixes(input)) {
       assertEquals(expected.get(index++), c);
     }
-
   }
 
 }
