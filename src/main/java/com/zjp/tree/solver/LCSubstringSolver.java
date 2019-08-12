@@ -4,7 +4,9 @@ import com.zjp.tree.ConcurrentRadixTree;
 import com.zjp.tree.common.CharSequences;
 import com.zjp.tree.node.Node;
 import com.zjp.tree.node.NodeFactory;
+import com.zjp.tree.node.impl.bytearry.ByteArrayCharSequence;
 import com.zjp.tree.node.util.PrettyPrintable;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
@@ -82,22 +84,19 @@ public class LCSubstringSolver implements PrettyPrintable {
     if (doc.length() == 0) {
       throw new NullPointerException("document is empty");
     }
-/*    suffixTree.acquireWriteLock();
-    try {*/
-      String documentString = CharSequences.toString(doc);
+    String documentString = CharSequences.toString(doc);
 
-      boolean added = documents.add(documentString);
-      if (added) {
-        addSuffixesToRadixTree(documentString);
-      }
-      return added;
-  /*  } finally {
-      suffixTree.releaseWriteLock();
-    }*/
+    boolean added = documents.add(documentString);
+    if (added) {
+      addSuffixesToRadixTree(documentString);
+    }
+    return added;
   }
 
   void addSuffixesToRadixTree(String keyAsString) {
-    Iterable<CharSequence> suffixes = CharSequences.generateSuffixes(keyAsString);
+    ByteArrayCharSequence bacs = new ByteArrayCharSequence(
+        keyAsString.getBytes(StandardCharsets.UTF_8), 0, keyAsString.length());
+    Iterable<CharSequence> suffixes = CharSequences.generateSuffixes(bacs);
     for (CharSequence suffix : suffixes) {
       Set<String> originalKeyRefs = suffixTree.getValueForExactKey(suffix);
       if (originalKeyRefs == null) {

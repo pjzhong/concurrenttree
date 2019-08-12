@@ -3,7 +3,6 @@ package com.zjp.tree.solver;
 import static org.junit.Assert.assertEquals;
 
 import com.zjp.tree.common.PrettyPrinter;
-import com.zjp.tree.node.NodeFactory;
 import com.zjp.tree.node.impl.DefaultCharSequenceNodeFactory;
 import com.zjp.tree.node.impl.bytearry.DefaultByteArrayNodeFactory;
 import com.zjp.tree.util.IOUtil;
@@ -15,9 +14,6 @@ import java.util.concurrent.Executors;
 import org.junit.Test;
 
 public class LCSSubstringSolverTest {
-
-  NodeFactory factory = new DefaultByteArrayNodeFactory();
-
 
   @Test
   public void testGetLongestCommonSubstring() throws InterruptedException {
@@ -59,20 +55,7 @@ public class LCSSubstringSolverTest {
   }
 
   @Test
-  public void testGetLongestCommon_single() {
-
-    List<String> documents = Arrays.asList(
-        "albert einstein, was a german theoretical physicist who developed the theory of general relativity",
-        "near the beginning of his career, albert einstein thought that newtonian mechanics was no longer "
-            +
-            "enough to reconcile the laws of classical mechanics with the laws of the electromagnetic field",
-        "in late summer 1895, at the age of sixteen, albert einstein sat the entrance examinations for "
-            +
-            "the swiss federal polytechnic in zurich");
-
-  }
-
-  public static void main(String[] args) throws Exception {
+  public void shakespeare() throws Exception {
     List<String> files = Arrays.asList(
         "/shakespeare/tragedies/antony_and_cleopatra.txt",
         "/shakespeare/tragedies/coriolanus.txt",
