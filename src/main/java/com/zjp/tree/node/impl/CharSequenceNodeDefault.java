@@ -23,7 +23,7 @@ public class CharSequenceNodeDefault implements Node {
 
     Node[] childArray = outgoingEdges.toArray(new Node[0]);
     Arrays.sort(childArray,
-        Comparator.comparingInt(Node::getIncomingEdgeFirstCharacter));
+        Comparator.comparingInt(Node::getFirstCharacter));
 
     this.outgoingEdges = new AtomicReferenceArray<>(childArray);
     this.outgoingEdgesList = new AtomicReferenceArrayListAdapter<>(
@@ -33,7 +33,7 @@ public class CharSequenceNodeDefault implements Node {
   }
 
   @Override
-  public Character getIncomingEdgeFirstCharacter() {
+  public Character getFirstCharacter() {
     return incomingEdgeCharSequence.charAt(0);
   }
 
@@ -51,11 +51,11 @@ public class CharSequenceNodeDefault implements Node {
   @Override
   public void updateOutgoingEdge(Node childNode) {
     int index = NodeUtil.binarySearch(outgoingEdges,
-        childNode.getIncomingEdgeFirstCharacter());
+        childNode.getFirstCharacter());
     if (index < 0) {
       throw new IllegalStateException(String.format(
           "Cannot update the reference to the following child node for the edge starting with '%s', no such edge already exists: %s",
-          childNode.getIncomingEdgeFirstCharacter(), childNode));
+          childNode.getFirstCharacter(), childNode));
     }
 
     outgoingEdges.set(index, childNode);

@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface Node {
 
-  Character getIncomingEdgeFirstCharacter();
+  Character getFirstCharacter();
 
   Node getOutgoingEdge(Character firstCharacter);
 

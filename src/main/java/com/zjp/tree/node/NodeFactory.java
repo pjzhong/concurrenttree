@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface NodeFactory {
 
-  Node createNode(CharSequence eageCharacters, Object value, List<Node> childNodes, boolean isRoot);
+  Node createNode(CharSequence edgeCharacters, Object value, List<Node> childNodes, boolean isRoot);
 
 }

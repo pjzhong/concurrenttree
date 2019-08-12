@@ -82,8 +82,8 @@ public class LCSubstringSolver implements PrettyPrintable {
     if (doc.length() == 0) {
       throw new NullPointerException("document is empty");
     }
-    suffixTree.acquireWriteLock();
-    try {
+/*    suffixTree.acquireWriteLock();
+    try {*/
       String documentString = CharSequences.toString(doc);
 
       boolean added = documents.add(documentString);
@@ -91,9 +91,9 @@ public class LCSubstringSolver implements PrettyPrintable {
         addSuffixesToRadixTree(documentString);
       }
       return added;
-    } finally {
+  /*  } finally {
       suffixTree.releaseWriteLock();
-    }
+    }*/
   }
 
   void addSuffixesToRadixTree(String keyAsString) {
@@ -102,7 +102,10 @@ public class LCSubstringSolver implements PrettyPrintable {
       Set<String> originalKeyRefs = suffixTree.getValueForExactKey(suffix);
       if (originalKeyRefs == null) {
         originalKeyRefs = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        suffixTree.put(suffix, originalKeyRefs);
+        Set<String> res = suffixTree.putIfAbsent(suffix, originalKeyRefs);
+        if (res != null) {
+          originalKeyRefs = res;
+        }
       }
       originalKeyRefs.add(keyAsString);
     }

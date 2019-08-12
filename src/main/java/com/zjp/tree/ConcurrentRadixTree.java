@@ -308,11 +308,11 @@ public class ConcurrentRadixTree<O> implements PrettyPrintable {
       throw new IllegalArgumentException("key value is Empty");
     }
 
-    SearchResult searchResult = searchTree(key);
-    Classification classification = searchResult.classification;
-
     acquireWriteLock();
     try {
+      SearchResult searchResult = searchTree(key);
+      Classification classification = searchResult.classification;
+
       switch (classification) {
         case EXACT_MATCH: {
           Object existing = searchResult.node.getValue();
